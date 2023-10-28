@@ -34,6 +34,7 @@ app.use(express.urlencoded({ extended: true }));
 app.post("/createUser", async (req, res) => {
   const user = req.body.user;
   const hashedPassword = await bcrypt.hash(req.body.password, 10);
+  const email = req.body.email;
 
   db.getConnection(async (err, connection) => {
     if (err) throw err;
@@ -41,8 +42,8 @@ app.post("/createUser", async (req, res) => {
     const sqlSearch = "SELECT * FROM userTable WHERE user = ?";
     const search_query = mysql.format(sqlSearch, [user]);
 
-    const sqlInsert = "INSERT INTO userTable VALUES (0,?,?)";
-    const insert_query = mysql.format(sqlInsert, [user, hashedPassword]);
+    const sqlInsert = "INSERT INTO userTable VALUES (0,?,?,?)";
+    const insert_query = mysql.format(sqlInsert, [user, email, hashedPassword]);
 
     await connection.query(search_query, async (err, result) => {
       if (err) throw err;
@@ -68,12 +69,12 @@ app.post("/createUser", async (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  const user = req.body.user;
+  const email = req.body.email;
   const password = req.body.password;
   db.getConnection(async (err, connection) => {
     if (err) throw err;
-    const sqlSearch = "SELECT * FROM userTable WHERE user = ?";
-    const search_query = mysql.format(sqlSearch, [user]);
+    const sqlSearch = "SELECT * FROM userTable WHERE email = ?";
+    const search_query = mysql.format(sqlSearch, [email]);
 
     await connection.query(search_query, async (err, result) => {
       connection.release();
@@ -88,7 +89,14 @@ app.post("/login", (req, res) => {
 
         if (await bcrypt.compare(password, hashedPassword)) {
           console.log("-------> Login Succesful");
-          res.send(user + " is logged in!");
+          const user_get = "SELECT user FROM userTable WHERE email = ?";
+          const user_query = mysql.format(user_get, [email]);
+
+          if (err) throw err;
+          await connection.query(user_query, async (err, result) => {
+            const user = result[0].user;
+            res.send(user + " is logged in!");
+          });
         } else {
           console.log("Password Incorrect");
           res.send("Password Incorrect!!");
