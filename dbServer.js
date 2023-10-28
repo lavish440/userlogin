@@ -31,16 +31,16 @@ app.listen(PORT, () => console.log("Server started on port " + PORT));
 app.use(express.json());
 
 app.post("/createUser", async (req, res) => {
-  const user = req.body.name;
+  const user = req.body.user;
   const hashedPassword = await bcrypt.hash(req.body.password, 10);
 
   db.getConnection(async (err, connection) => {
     if (err) throw err;
 
-    const sqlSearch = "SELECT * FROM hackathon WHERE user = ?";
+    const sqlSearch = "SELECT * FROM userTable WHERE user = ?";
     const search_query = mysql.format(sqlSearch, [user]);
 
-    const sqlInsert = "INSERT INTO hackathon VALUES (0,?,?)";
+    const sqlInsert = "INSERT INTO userTable VALUES (0,?,?)";
     const insert_query = mysql.format(sqlInsert, [user, hashedPassword]);
 
     await connection.query(search_query, async (err, result) => {
