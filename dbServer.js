@@ -65,3 +65,34 @@ app.post("/createUser", async (req, res) => {
     });
   });
 });
+
+app.post("/login", (req, res) => {
+  const user = req.body.user;
+  const password = req.body.password;
+  db.getConnection(async (err, connection) => {
+    if (err) throw err;
+    const sqlSearch = "SELECT * FROM userTable WHERE user = ?";
+    const search_query = mysql.format(sqlSearch, [user]);
+
+    await connection.query(search_query, async (err, result) => {
+      connection.release();
+
+      if (err) throw err;
+
+      if (result.length == 0) {
+        console.log("-------> User does not exist");
+        res.sendStatus(404);
+      } else {
+        const hashedPassword = result[0].password;
+
+        if (await bcrypt.compare(password, hashedPassword)) {
+          console.log("-------> Login Succesful");
+          res.send(user + " is logged in!");
+        } else {
+          console.log("Password Incorrect");
+          res.send("Password Incorrect!!");
+        }
+      }
+    });
+  });
+});
