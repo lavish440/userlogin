@@ -5,6 +5,7 @@ const app = express();
 const mysql = require("mysql");
 
 require("dotenv").config();
+const notifier = require("node-notifier");
 
 const DB_HOST = process.env.DB_HOST;
 const DB_USER = process.env.DB_USER;
@@ -33,7 +34,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.post("/createUser", async (req, res) => {
   const user = req.body.user;
-  const hashedPassword = await bcrypt.hash(req.body.password, 10);
+  const hashedPassword = bcrypt.hash(req.body.password, 10);
   const email = req.body.email;
 
   db.getConnection(async (err, connection) => {
@@ -45,7 +46,7 @@ app.post("/createUser", async (req, res) => {
     const sqlInsert = "INSERT INTO userTable VALUES (0,?,?,?)";
     const insert_query = mysql.format(sqlInsert, [user, email, hashedPassword]);
 
-    await connection.query(search_query, async (err, result) => {
+    connection.query(search_query, async (err, result) => {
       if (err) throw err;
       console.log("------> Search Results");
       console.log(result.length);
@@ -55,7 +56,7 @@ app.post("/createUser", async (req, res) => {
         console.log("------> User already exists");
         res.sendStatus(409);
       } else {
-        await connection.query(insert_query, (err, result) => {
+        connection.query(insert_query, (err, result) => {
           connection.release();
 
           if (err) throw err;
@@ -76,7 +77,7 @@ app.post("/login", (req, res) => {
     const sqlSearch = "SELECT * FROM userTable WHERE email = ?";
     const search_query = mysql.format(sqlSearch, [email]);
 
-    await connection.query(search_query, async (err, result) => {
+    connection.query(search_query, async (err, result) => {
       connection.release();
 
       if (err) throw err;
@@ -87,19 +88,26 @@ app.post("/login", (req, res) => {
       } else {
         const hashedPassword = result[0].password;
 
-        if (await bcrypt.compare(password, hashedPassword)) {
+        if (bcrypt.compare(password, hashedPassword)) {
           console.log("-------> Login Succesful");
           const user_get = "SELECT user FROM userTable WHERE email = ?";
           const user_query = mysql.format(user_get, [email]);
 
           if (err) throw err;
-          await connection.query(user_query, async (err, result) => {
+          connection.query(user_query, async (err, result) => {
+            if (err) throw err;
             const user = result[0].user;
             res.send(user + " is logged in!");
           });
         } else {
           console.log("Password Incorrect");
           res.send("Password Incorrect!!");
+          notifier.notify({
+            title: "Salutations!",
+            message: "Hey there!",
+            sound: true,
+            wait: true,
+          });
         }
       }
     });
