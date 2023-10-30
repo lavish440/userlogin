@@ -29,7 +29,9 @@ db.getConnection((err, connection) => {
   console.log("DB Connected Succesful: " + connection.threadId);
 });
 
-app.listen(PORT, () => console.log("Server started on port " + PORT));
+app.listen(PORT, () =>
+  console.log("Server started on port " + "http://localhost:" + PORT),
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
