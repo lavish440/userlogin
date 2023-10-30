@@ -111,7 +111,7 @@ app.post("/login", (req, res) => {
               sound: true,
               wait: true,
             });
-            res.redirect("http://127.0.0.1");
+            res.redirect("/main");
             console.log("-----> Redirected Succesfully");
             // res.send(user + " is logged in!");
           });
