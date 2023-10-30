@@ -4,6 +4,7 @@ const app = express();
 
 const mysql = require("mysql");
 const notifier = require("node-notifier");
+const generateAccessToken = require("./generateAccessToken");
 
 require("dotenv").config();
 
@@ -31,6 +32,7 @@ db.getConnection((err, connection) => {
 app.listen(PORT, () => console.log("Server started on port " + PORT));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(express.static("public"));
 
 app.post("/createUser", async (req, res) => {
   const user = req.body.user;
@@ -84,7 +86,11 @@ app.post("/login", (req, res) => {
 
       if (result.length == 0) {
         console.log("-------> User does not exist");
-        res.sendStatus(404);
+        // res.sendStatus(404);
+        res.set("Content-Type", "text/html");
+        res.write(
+          "<html><body><script>alert('User is not registered!' + `\n` + 'Redirecting you to Login Page');window.location.replace('/');</script></body></html>",
+        );
       } else {
         const hashedPassword = result[0].password;
 
@@ -110,6 +116,36 @@ app.post("/login", (req, res) => {
         } else {
           console.log("Password Incorrect");
           res.send("Password Incorrect!!");
+        }
+      }
+    });
+  });
+});
+
+app.post("/jwt", (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+  db.getConnection(async (err, connection) => {
+    if (err) throw err;
+    const sqlSearch = "SELECT * FROM userTable WHERE email = ?";
+    const search_query = mysql.format(sqlSearch, [email]);
+    await connection.query(search_query, async (err, result) => {
+      connection.release();
+
+      if (err) throw err;
+      if (result.length == 0) {
+        console.log("--------> email does not exist");
+        res.sendStatus(404);
+      } else {
+        const hashedPassword = result[0].password;
+        if (await bcrypt.compare(password, hashedPassword)) {
+          console.log("---------> Login Successful");
+          console.log("---------> Generating accessToken");
+          const token = generateAccessToken({ email: email });
+          console.log(token);
+          res.json({ accessToken: token });
+        } else {
+          res.send("Password incorrect!");
         }
       }
     });
