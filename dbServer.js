@@ -3,6 +3,7 @@ const bcrypt = require("bcrypt");
 const app = express();
 
 const mysql = require("mysql");
+const notifier = require("node-notifier");
 
 require("dotenv").config();
 
@@ -95,7 +96,16 @@ app.post("/login", (req, res) => {
           if (err) throw err;
           await connection.query(user_query, async (err, result) => {
             const user = result[0].user;
-            res.send(user + " is logged in!");
+            // res.sendStatus(200);
+            notifier.notify({
+              title: "Salutations!",
+              message: "Hey there!",
+              sound: true,
+              wait: true,
+            });
+            res.redirect("http://127.0.0.1");
+            console.log("-----> Redirected Succesfully");
+            // res.send(user + " is logged in!");
           });
         } else {
           console.log("Password Incorrect");
