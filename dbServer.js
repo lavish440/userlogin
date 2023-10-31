@@ -112,7 +112,7 @@ app.post("/login", (req, res) => {
               wait: true,
             });
             res.redirect("/main");
-            console.log("-----> Redirected Succesfully");
+            console.log("------> Redirected Succesfully");
             // res.send(user + " is logged in!");
           });
         } else {
