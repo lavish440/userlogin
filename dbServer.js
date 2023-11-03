@@ -52,19 +52,19 @@ app.post("/createUser", async (req, res) => {
 
     await connection.query(search_query, async (err, result) => {
       if (err) throw err;
-      console.log("------> Search Results");
+      console.log("---------> Search Results");
       console.log(result.length);
 
       if (result.length != 0) {
         connection.release();
-        console.log("------> User already exists");
+        console.log("---------> User already exists");
         res.sendStatus(409);
       } else {
         await connection.query(insert_query, (err, result) => {
           connection.release();
 
           if (err) throw err;
-          console.log("------> Created new user");
+          console.log("---------> Created new user");
           console.log(result.insertId);
           res.sendStatus(201);
         });
@@ -87,7 +87,7 @@ app.post("/login", (req, res) => {
       if (err) throw err;
 
       if (result.length == 0) {
-        console.log("-------> User does not exist");
+        console.log("---------> User does not exist");
         // res.sendStatus(404);
         res.set("Content-Type", "text/html");
         res.write(
@@ -97,7 +97,7 @@ app.post("/login", (req, res) => {
         const hashedPassword = result[0].password;
 
         if (await bcrypt.compare(password, hashedPassword)) {
-          console.log("-------> Login Succesful");
+          console.log("---------> Login Succesful");
           const user_get = "SELECT user FROM userTable WHERE email = ?";
           const user_query = mysql.format(user_get, [email]);
 
@@ -112,7 +112,7 @@ app.post("/login", (req, res) => {
               wait: true,
             });
             res.redirect("/main");
-            console.log("------> Redirected Succesfully");
+            console.log("---------> Redirected Succesfully");
             // res.send(user + " is logged in!");
           });
         } else {
@@ -136,7 +136,7 @@ app.post("/jwt", (req, res) => {
 
       if (err) throw err;
       if (result.length == 0) {
-        console.log("--------> email does not exist");
+        console.log("---------> email does not exist");
         res.sendStatus(404);
       } else {
         const hashedPassword = result[0].password;
