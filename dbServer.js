@@ -89,9 +89,9 @@ app.post("/login", (req, res) => {
       if (result.length == 0) {
         console.log("---------> User does not exist");
         // res.sendStatus(404);
-        res.set("Content-Type", "text/html");
-        res.write(
-          "<html><body><script>alert('User is not registered!' + `\n` + 'Redirecting you to Login Page');window.location.replace('/');</script></body></html>",
+        // res.set("Content-Type", "text/html");
+        res.send(
+          "<script>alert('User is not registered!' + `\n` + 'Redirecting you to Login Page');window.location.replace('/');</script>",
         );
       } else {
         const hashedPassword = result[0].password;
