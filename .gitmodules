@@ -1,3 +1,4 @@
 [submodule "public/main"]
 	path = public/main
 	url = https://github.com/lavish440/crm-website
+	branch = vercel
