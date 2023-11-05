@@ -4,7 +4,11 @@ const app = express();
 
 const mysql = require("mysql");
 const notifier = require("node-notifier");
-const generateAccessToken = require("./generateAccessToken");
+const jsonwebtoken = require("./generateAccessToken");
+const generateAccessToken = jsonwebtoken.generateAccessToken;
+const generateRefreshToken = jsonwebtoken.generateRefreshToken;
+const validateToken = jsonwebtoken.validateToken;
+let refreshTokens = [];
 
 require("dotenv").config();
 
@@ -34,7 +38,6 @@ app.listen(PORT, () =>
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static("public"));
 
 app.post("/createUser", async (req, res) => {
   const user = req.body.user;
@@ -50,6 +53,7 @@ app.post("/createUser", async (req, res) => {
     const sqlInsert = "INSERT INTO userTable VALUES (0,?,?,?)";
     const insert_query = mysql.format(sqlInsert, [user, email, hashedPassword]);
 
+    // @ts-ignore
     await connection.query(search_query, async (err, result) => {
       if (err) throw err;
       console.log("---------> Search Results");
@@ -104,6 +108,7 @@ app.post("/login", (req, res) => {
           if (err) throw err;
           await connection.query(user_query, async (err, result) => {
             const user = result[0].user;
+            if (err) throw err;
             // res.sendStatus(200);
             notifier.notify({
               title: "Salutations!",
@@ -112,7 +117,7 @@ app.post("/login", (req, res) => {
               wait: true,
             });
             res.redirect("/main");
-            console.log("---------> Redirected Succesfully");
+            console.log(`---------> {user} Redirected Succesfully`);
             // res.send(user + " is logged in!");
           });
         } else {
@@ -143,9 +148,14 @@ app.post("/jwt", (req, res) => {
         if (await bcrypt.compare(password, hashedPassword)) {
           console.log("---------> Login Successful");
           console.log("---------> Generating accessToken");
-          const token = generateAccessToken({ email: email });
-          console.log(token);
-          res.json({ accessToken: token });
+          const accessToken = generateAccessToken({ user: email });
+          const refreshToken = generateRefreshToken({ user: email });
+          refreshTokens.push(refreshToken);
+          console.log(accessToken);
+          res.send({
+            accessToken: accessToken,
+            refreshToken: refreshToken,
+          });
         } else {
           res.send("Password incorrect!");
         }
@@ -153,3 +163,33 @@ app.post("/jwt", (req, res) => {
     });
   });
 });
+
+app.post("/refreshtoken", (req, res) => {
+  if (!refreshTokens.includes(req.body.token))
+    res.status(400).send("refresh Token invalid!!");
+
+  refreshTokens = refreshTokens.filter((c) => c != req.body.token);
+
+  const accessToken = generateAccessToken({ user: req.body.email });
+  const refreshToken = generateRefreshToken({ user: req.body.email });
+
+  res.json({ accessToken: accessToken, refreshToken: refreshToken });
+});
+
+app.delete("/logout", (req, res) => {
+  if (!refreshTokens.includes(req.body.token))
+    res.status(400).send("refresh Token invalid!!");
+  else {
+    refreshTokens = refreshTokens.filter((c) => c != req.body.token);
+    res /* .status(204) */
+      .send("Logged Out");
+  }
+});
+
+app.get("/main", validateToken, (req, res) => {
+  console.log("Token is valid");
+  console.log(req.body.email);
+  res.send(`${req.user.email} successfully accessed post`);
+});
+
+app.use(express.static("public"));
