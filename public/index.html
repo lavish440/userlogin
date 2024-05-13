@@ -3,6 +3,7 @@
   <head>
     <title>Slide Navbar</title>
     <link rel="stylesheet" type="text/css" href="index.css" />
+    <script src="script.js"></script>
   </head>
 
   <body>
@@ -12,7 +13,7 @@
       <div class="signup">
         <form method="post" action="/createUser">
           <label for="chk" aria-hidden="true">Sign up</label>
-          <input type="text" name="user" placeholder="User name" required="" />
+          <input type="text" name="user" placeholder="Username" required="" />
           <input type="email" name="email" placeholder="Email" required="" />
           <input
             type="password"
@@ -25,16 +26,23 @@
       </div>
 
       <div class="login">
-        <form method="post" action="/login">
+        <form method="post" name="login">
           <label for="chk" aria-hidden="true">Login</label>
-          <input type="email" name="email" placeholder="Email" required="" />
+          <input
+            type="email"
+            name="email"
+            id="email"
+            placeholder="Email"
+            required=""
+          />
           <input
             type="password"
             name="password"
+            id="password"
             placeholder="Password"
             required=""
           />
-          <button type="submit">Login</button>
+          <button onClick="SendRequest()">Login</button>
         </form>
       </div>
     </div>
